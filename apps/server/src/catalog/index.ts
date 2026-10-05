@@ -1,0 +1,16 @@
+export {
+  CATALOGUE_SHEET_NAMES,
+  CatalogueWorkbookError,
+  MAX_CATALOGUE_COMPRESSED_BYTES,
+  MAX_CATALOGUE_UNCOMPRESSED_BYTES,
+  parseCatalogueWorkbook,
+  profileCatalogue,
+  type CatalogueProfile,
+  type CatalogueSheetName,
+  type CatalogueWorkbookErrorCode,
+  type ParsedCatalogueCell,
+  type ParsedCatalogueRow,
+  type ParsedCatalogueSheet,
+  type ParsedCatalogueWorkbook,
+  type ParsedCellValue,
+} from "./catalogue-workbook.js";

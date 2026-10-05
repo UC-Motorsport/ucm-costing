@@ -1,0 +1,69 @@
+{
+  "name": "ucm-costing",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,web -c red,blue \"npm run dev -w @ucm/server\" \"npm run dev -w @ucm/web\"",
+    "dev:watch": "node scripts/dev-watch.mjs",
+    "dev:stack": "node scripts/dev-stack.mjs up",
+    "dev:stack:test": "node scripts/dev-stack.mjs test",
+    "dev:stack:check": "node scripts/dev-stack.mjs check",
+    "dev:stack:doctor": "node scripts/dev-stack.mjs doctor",
+    "dev:stack:stop": "node scripts/dev-stack.mjs stop",
+    "dev:stack:reset": "node scripts/dev-stack.mjs reset",
+    "dev:stack:logs": "node scripts/dev-stack.mjs logs",
+    "dev:stack:status": "node scripts/dev-stack.mjs status",
+    "build": "npm run build -w @ucm/domain && npm run build -w @ucm/web && npm run build -w @ucm/server",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present && npm run test:ops",
+    "test:ops": "node --test scripts/*.test.mjs",
+    "lint": "npm run lint --workspaces --if-present",
+    "db:migrate": "tsx apps/server/src/cli/migrate.ts",
+    "db:migrate:sqlite": "tsx apps/server/src/cli/import-sqlite.ts",
+    "seed": "tsx apps/server/src/cli/seed.ts",
+    "report:demo": "tsx apps/server/src/cli/report-demo.ts",
+    "verify:pdf": "tsx apps/server/src/cli/verify-pdf.ts",
+    "verify:audit-ledger": "tsx apps/server/src/cli/verify-audit-ledger.ts",
+    "user:create-admin": "tsx apps/server/src/cli/create-admin.ts",
+    "backup": "node scripts/backup.mjs",
+    "backup:verify": "node scripts/backup.mjs --verify",
+    "restore": "node scripts/restore.mjs",
+    "env:init": "node scripts/init-env.mjs",
+    "references:fetch": "node scripts/reference-assets.mjs --fetch",
+    "references:check": "node scripts/reference-assets.mjs --check",
+    "source:export": "node scripts/source-export.mjs"
+  },
+  "engines": {
+    "node": "24.x"
+  },
+  "devDependencies": {
+    "@emnapi/core": "^2.0.0-alpha.3",
+    "@emnapi/runtime": "^2.0.0-alpha.3",
+    "@types/node": "^24.10.0",
+    "concurrently": "^9.2.1",
+    "pg": "^8.22.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  },
+  "optionalDependencies": {
+    "@oxlint/binding-linux-arm64-gnu": "^1.76.0",
+    "@oxlint/binding-linux-x64-gnu": "^1.76.0",
+    "@rolldown/binding-linux-arm64-gnu": "^1.1.5",
+    "@rolldown/binding-linux-x64-gnu": "^1.1.5",
+    "@tailwindcss/oxide-linux-arm64-gnu": "^4.3.3",
+    "@tailwindcss/oxide-linux-x64-gnu": "^4.3.3",
+    "lightningcss-linux-arm64-gnu": "^1.33.0",
+    "lightningcss-linux-x64-gnu": "^1.33.0"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/UC-Motorsport/ucm-costing.git"
+  }
+}

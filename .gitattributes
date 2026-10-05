@@ -1,0 +1,2 @@
+# Preserve the intentional Windows-1252 / CRLF parser fixture.
+apps/server/test/fixtures/legacy-master.csv -text whitespace=cr-at-eol

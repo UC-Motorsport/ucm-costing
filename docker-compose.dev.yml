@@ -1,0 +1,163 @@
+name: ucm-costing-dev
+
+x-development-image: &development-image
+  image: ucm-costing:development
+
+x-development-build: &development-build
+  build:
+    context: .
+    dockerfile: Dockerfile
+    target: development
+
+x-hardened: &hardened
+  init: true
+  read_only: true
+  tmpfs:
+    - /tmp:size=64m,mode=1777
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+
+services:
+  postgres:
+    image: postgres:15-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ucm
+      POSTGRES_USER: ucm_migrator
+      POSTGRES_PASSWORD: ucm-development-migrator-password
+      UCM_DB_APP_PASSWORD: ucm-development-app-password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - type: bind
+        source: ./docker/postgres/init
+        target: /docker-entrypoint-initdb.d
+        read_only: true
+    networks:
+      - database
+      - host-access
+    ports:
+      - "127.0.0.1:${UCM_DEV_DB_PORT:-54329}:5432"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U ucm_migrator -d ucm
+      interval: 2s
+      timeout: 5s
+      start_period: 5s
+      retries: 20
+    stop_grace_period: 30s
+
+  migrate:
+    <<: [*development-image, *hardened]
+    restart: "no"
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://ucm_migrator:ucm-development-migrator-password@postgres:5432/ucm
+      UCM_DATABASE_SSL: disable
+      UCM_DATABASE_APP_ROLE: ucm_app
+      UCM_DATABASE_APP_PASSWORD: ucm-development-app-password
+    command: ["node", "apps/server/dist/cli/migrate.js"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - database
+
+  seed:
+    <<: [*development-image, *hardened]
+    restart: "no"
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://ucm_app:ucm-development-app-password@postgres:5432/ucm
+      UCM_DATABASE_SSL: disable
+      UCM_ENABLE_DEVELOPMENT_ACCOUNT: "true"
+    command: ["node", "apps/server/dist/cli/seed-development.js"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - database
+
+  app:
+    <<: [*development-image, *development-build, *hardened]
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: "8080"
+      DATABASE_URL: postgresql://ucm_app:ucm-development-app-password@postgres:5432/ucm
+      UCM_DATABASE_SSL: disable
+      UCM_DB_POOL_MAX: "10"
+      UCM_ENABLE_DEVELOPMENT_ACCOUNT: "true"
+      UCM_SHARED_ACCESS_KEY: "test"
+      UCM_VIEWER_ACCESS_KEY: "viewer-test"
+      UCM_ADMIN_ACCESS_KEY: "admin-test"
+      UCM_ALLOWED_ORIGINS: "http://localhost:${UCM_DEV_HTTP_PORT:-8080},http://127.0.0.1:${UCM_DEV_HTTP_PORT:-8080}"
+      UCM_TRUST_PROXY_HOPS: "0"
+      UCM_DATA_ROOT: /app/data
+      UCM_OUTPUT_ROOT: /app/output
+      UCM_BACKUP_ROOT: /app/backups
+      NODE_OPTIONS: --enable-source-maps
+    volumes:
+      - data:/app/data
+      - output:/app/output
+      - backups:/app/backups
+    ports:
+      - "127.0.0.1:${UCM_DEV_HTTP_PORT:-8080}:8080"
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+    networks:
+      - default
+      - database
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:8080/health').then((response)=>{if(!response.ok)process.exit(1)}).catch(()=>process.exit(1))"
+      interval: 5s
+      timeout: 5s
+      start_period: 20s
+      retries: 12
+
+  test:
+    image: ucm-costing:test
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: build
+    profiles: ["test"]
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    environment:
+      NODE_ENV: test
+      TEST_DATABASE_URL: postgresql://ucm_migrator:ucm-development-migrator-password@postgres:5432/ucm
+      DATABASE_URL: postgresql://ucm_migrator:ucm-development-migrator-password@postgres:5432/ucm
+      UCM_DATABASE_SSL: disable
+      UCM_TEST_DATABASE_SSL: disable
+      XDG_CACHE_HOME: /tmp/cache
+      npm_config_cache: /tmp/npm-cache
+    command: ["npm", "test"]
+    tmpfs:
+      - /tmp:size=512m,mode=1777
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - database
+
+volumes:
+  postgres-data:
+  data:
+  output:
+  backups:
+
+networks:
+  database:
+    internal: true
+  host-access:

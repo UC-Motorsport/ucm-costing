@@ -1,0 +1,6 @@
+# Optional historical PDF utilities; not used by the application runtime.
+pdfplumber>=0.11,<0.12
+pypdf>=6.6,<7
+pypdfium2>=4.30,<6
+Pillow>=12,<13
+numpy>=2.3,<3

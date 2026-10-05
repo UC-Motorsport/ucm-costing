@@ -1,0 +1,14 @@
+Synthetic import fixture
+
+SYS,HLA,SubA,Part No.,Rev,Assembly,Component,Description ,Bought/Made,QTY  total,QTY on car,Costed?,where did it come from (source),Costing Updated,Drawing,Iso image,Costing sheet,Checked By,Notes,Compiled
+Drivetrain - DR
+DR,01,00,00,,Example drive,High Level Assembly
+DR,01,01,00,,Example mount,Sub Assembly
+DR,01,01,01,,,Example bracket,Café test,Made,2,2,1,Example supplier,2,2,2,2,Example reviewer,Synthetic note,2
+DR,01,01,02-R,,,Example right spacer,,Bought,1,1,,,,,,,,,,synthetic overflow
+DT,01,01,03,,,Example inherited system
+DR,01,01,03,,,Example duplicate
+DR,01,,04,,,Example incomplete hierarchy
+DR,02,00,00,,Example second assembly,High Level Assembly
+DR,02,00,01,,,Example pin,,Made,1,1,unexpected
+SYS,HLA,SubA,Part No.,Rev,Assembly,Component,Description ,Bought/Made,QTY  total,QTY on car,Costed?,where did it come from (source),Costing Updated,Drawing,Iso image,Costing sheet,Checked By,Notes,Compiled

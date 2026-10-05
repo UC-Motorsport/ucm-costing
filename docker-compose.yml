@@ -1,0 +1,190 @@
+name: ucm-costing
+
+x-app-image: &app-image
+  image: ucm-costing:production
+  build:
+    context: .
+    dockerfile: Dockerfile
+
+x-app-files: &app-files
+  volumes:
+    - type: bind
+      source: "${UCM_DATA_DIR:-./data}"
+      target: /app/data
+    - type: bind
+      source: "${UCM_OUTPUT_DIR:-./output}"
+      target: /app/output
+    - type: bind
+      source: "${UCM_BACKUP_DIR:-./backups}"
+      target: /app/backups
+
+x-hardened: &hardened
+  init: true
+  user: "${UCM_UID:-1000}:${UCM_GID:-1000}"
+  read_only: true
+  tmpfs:
+    - /tmp:size=64m,mode=1777
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+
+services:
+  postgres:
+    image: postgres:15-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ucm
+      POSTGRES_USER: ucm_migrator
+      POSTGRES_PASSWORD: "${UCM_DB_MIGRATOR_PASSWORD:?set UCM_DB_MIGRATOR_PASSWORD}"
+      UCM_DB_APP_PASSWORD: "${UCM_DB_APP_PASSWORD:?set UCM_DB_APP_PASSWORD}"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - type: bind
+        source: ./docker/postgres/init
+        target: /docker-entrypoint-initdb.d
+        read_only: true
+    networks:
+      - database
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U ucm_migrator -d ucm
+      interval: 5s
+      timeout: 5s
+      start_period: 10s
+      retries: 12
+    stop_grace_period: 60s
+
+  migrate:
+    <<: [*app-image, *hardened]
+    restart: "no"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: "postgresql://ucm_migrator:${UCM_DB_MIGRATOR_PASSWORD:?set UCM_DB_MIGRATOR_PASSWORD}@postgres:5432/ucm"
+      UCM_DATABASE_SSL: disable
+      UCM_DATABASE_APP_ROLE: ucm_app
+      UCM_DATABASE_APP_PASSWORD: "${UCM_DB_APP_PASSWORD:?set UCM_DB_APP_PASSWORD}"
+      UCM_DATA_ROOT: /app/data
+      UCM_OUTPUT_ROOT: /app/output
+    command: ["node", "apps/server/dist/cli/migrate.js"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - database
+
+  app:
+    <<: [*app-image, *app-files, *hardened]
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      TZ: Pacific/Auckland
+      PORT: "8080"
+      UCM_BIND_ADDRESS: "${UCM_BIND_ADDRESS:-127.0.0.1}"
+      DATABASE_URL: "postgresql://ucm_app:${UCM_DB_APP_PASSWORD:?set UCM_DB_APP_PASSWORD}@postgres:5432/ucm"
+      UCM_DATABASE_SSL: disable
+      UCM_DB_POOL_MAX: "${UCM_DB_POOL_MAX:-10}"
+      UCM_DB_CONNECT_TIMEOUT_MS: "${UCM_DB_CONNECT_TIMEOUT_MS:-5000}"
+      UCM_DB_STATEMENT_TIMEOUT_MS: "${UCM_DB_STATEMENT_TIMEOUT_MS:-30000}"
+      UCM_DB_LOCK_TIMEOUT_MS: "${UCM_DB_LOCK_TIMEOUT_MS:-5000}"
+      UCM_DB_IDLE_TX_TIMEOUT_MS: "${UCM_DB_IDLE_TX_TIMEOUT_MS:-30000}"
+      UCM_SHARED_ACCESS_KEY: "${UCM_SHARED_ACCESS_KEY:?set UCM_SHARED_ACCESS_KEY}"
+      UCM_VIEWER_ACCESS_KEY: "${UCM_VIEWER_ACCESS_KEY:?set UCM_VIEWER_ACCESS_KEY}"
+      UCM_ADMIN_ACCESS_KEY: "${UCM_ADMIN_ACCESS_KEY:?set UCM_ADMIN_ACCESS_KEY}"
+      UCM_ALLOW_WEAK_ACCESS_KEYS: "${UCM_ALLOW_WEAK_ACCESS_KEYS:-false}"
+      UCM_CSRF_SECRET: "${UCM_CSRF_SECRET:?set UCM_CSRF_SECRET}"
+      UCM_AUDIT_IP_SALT: "${UCM_AUDIT_IP_SALT:?set UCM_AUDIT_IP_SALT}"
+      UCM_ALLOWED_ORIGINS: "${UCM_ALLOWED_ORIGINS:?set UCM_ALLOWED_ORIGINS}"
+      UCM_ALLOW_INSECURE_HTTP: "${UCM_ALLOW_INSECURE_HTTP:-false}"
+      UCM_TRUST_PROXY_HOPS: "${UCM_TRUST_PROXY_HOPS:?set UCM_TRUST_PROXY_HOPS}"
+      UCM_DATA_ROOT: /app/data
+      UCM_OUTPUT_ROOT: /app/output
+      UCM_BACKUP_ROOT: /app/backups
+      NODE_OPTIONS: --enable-source-maps
+    command: ["node", "scripts/production-supervisor.mjs"]
+    ports:
+      - "${UCM_BIND_ADDRESS:-127.0.0.1}:${UCM_HTTP_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - default
+      - database
+    stop_grace_period: 20s
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:8080/health').then((response)=>{if(!response.ok)process.exit(1)}).catch(()=>process.exit(1))"
+      interval: 15s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+
+  backup:
+    <<: [*app-image, *app-files, *hardened]
+    profiles: ["ops"]
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: "postgresql://ucm_app:${UCM_DB_APP_PASSWORD:?set UCM_DB_APP_PASSWORD}@postgres:5432/ucm"
+      UCM_DATA_ROOT: /app/data
+      UCM_OUTPUT_ROOT: /app/output
+      UCM_BACKUP_ROOT: /app/backups
+    entrypoint: ["node", "scripts/backup.mjs"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - database
+
+  restore:
+    <<: [*app-image, *app-files, *hardened]
+    profiles: ["ops"]
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: "postgresql://ucm_migrator:${UCM_DB_MIGRATOR_PASSWORD:?set UCM_DB_MIGRATOR_PASSWORD}@postgres:5432/ucm"
+      UCM_DATA_ROOT: /app/data
+      UCM_OUTPUT_ROOT: /app/output
+      UCM_BACKUP_ROOT: /app/backups
+    entrypoint: ["node", "scripts/restore.mjs"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - database
+
+  test:
+    image: ucm-costing:test
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: build
+    profiles: ["test"]
+    environment:
+      NODE_ENV: test
+      TEST_DATABASE_URL: "postgresql://ucm_migrator:${UCM_DB_MIGRATOR_PASSWORD:?set UCM_DB_MIGRATOR_PASSWORD}@postgres:5432/ucm"
+      DATABASE_URL: "postgresql://ucm_migrator:${UCM_DB_MIGRATOR_PASSWORD:?set UCM_DB_MIGRATOR_PASSWORD}@postgres:5432/ucm"
+      UCM_DATABASE_SSL: disable
+      UCM_TEST_DATABASE_SSL: disable
+    command: ["npm", "run", "test", "--workspace", "@ucm/server"]
+    volumes:
+      - type: bind
+        source: ./docs
+        target: /app/docs
+        read_only: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - database
+
+volumes:
+  postgres-data:
+
+networks:
+  database:
+    internal: true

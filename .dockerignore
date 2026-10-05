@@ -1,0 +1,29 @@
+.git
+.gitignore
+.DS_Store
+**/.DS_Store
+**/node_modules
+**/dist
+**/.vite
+**/coverage
+**/*.tsbuildinfo
+
+.env
+.env.*
+!.env.example
+docker-compose.override.yml
+
+data
+output
+backups
+tmp
+outputs
+artifacts
+execplans
+
+# The runtime needs only the governing addendum and official catalogue pack.
+docs/UCM25 Final Costing Report.pdf
+docs/*.csv
+docs/design
+docs/references/supporting
+docs/references/team/*

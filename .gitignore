@@ -1,0 +1,46 @@
+node_modules/
+dist/
+.vite/
+coverage/
+*.tsbuildinfo
+
+# Mutable application state and generated operator artifacts.
+data/
+output/
+backups/
+outputs/
+artifacts/
+
+# Temporary research and visual-QA intermediates.
+tmp/
+__pycache__/
+*.pyc
+
+# Local environment overrides.
+.env
+.env.*
+!.env.example
+docker-compose.override.yml
+
+# OS/editor files.
+.DS_Store
+.idea/
+.vscode/
+
+# Large original report is distributed through a private GitHub release.
+/docs/UCM25 Final Costing Report.pdf
+
+# Private team records, external references, and optional brand assets.
+/docs/*.csv
+/docs/*.pdf
+/docs/references/**/*.xlsx
+/docs/references/**/*.pdf
+/docs/references/team/
+/docs/design/
+/apps/server/assets/*.png
+/apps/server/assets/*.jpg
+*.sqlite
+*.sqlite3
+*.dump
+*.pem
+*.key
