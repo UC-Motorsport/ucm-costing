@@ -42,7 +42,7 @@
     "node": "24.x"
   },
   "devDependencies": {
-    "@emnapi/core": "^2.0.0-alpha.3",
+    "@emnapi/core": "^2.0.0-alpha.5",
     "@emnapi/runtime": "^2.0.0-alpha.3",
     "@types/node": "^24.10.0",
     "concurrently": "^9.2.1",
