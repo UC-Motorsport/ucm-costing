@@ -54,7 +54,7 @@
   "optionalDependencies": {
     "@oxlint/binding-linux-arm64-gnu": "^1.76.0",
     "@oxlint/binding-linux-x64-gnu": "^1.76.0",
-    "@rolldown/binding-linux-arm64-gnu": "^1.1.5",
+    "@rolldown/binding-linux-arm64-gnu": "^1.2.12",
     "@rolldown/binding-linux-x64-gnu": "^1.1.5",
     "@tailwindcss/oxide-linux-arm64-gnu": "^4.3.3",
     "@tailwindcss/oxide-linux-x64-gnu": "^4.3.3",
