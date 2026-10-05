@@ -44,8 +44,6 @@ Explain the problem, resulting behavior, and verification performed. Include
 synthetic examples and screenshots when useful. Add regression coverage for
 behavior changes; preserve immutable report snapshots, audit provenance and
 source hashes. Describe schema changes and recovery implications explicitly.
-Complex features and significant refactors use an ExecPlan under `execplans/`
-following `PLANS.md`.
 
 Never include real team records, personal information, credentials, `.env`,
 database dumps, generated reports or brand assets. Test fixtures must be
