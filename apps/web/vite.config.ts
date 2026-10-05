@@ -24,7 +24,9 @@ export default defineConfig({
   },
   test: {
     environment: "jsdom",
-    maxWorkers: 4,
+    // Full-app jsdom tests contend for CPU on shared GitHub runners.
+    maxWorkers: process.env.CI ? 2 : 4,
+    testTimeout: 15_000,
     setupFiles: "./src/test/setup.ts",
     clearMocks: true,
     restoreMocks: true,

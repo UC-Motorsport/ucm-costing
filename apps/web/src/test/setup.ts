@@ -1,10 +1,14 @@
 import "@testing-library/jest-dom/vitest"
 
-import { cleanup } from "@testing-library/react"
+import { cleanup, configure } from "@testing-library/react"
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from "vitest"
 
 import { server } from "@/test/server"
 import { setViewport } from "@/test/viewport"
+
+// Lazy-loaded screens and mocked network responses may take longer on CI.
+// Keep assertions condition-based instead of adding fixed sleeps or retries.
+configure({ asyncUtilTimeout: 5_000 })
 
 beforeAll(() => {
   server.listen({ onUnhandledRequest: "error" })

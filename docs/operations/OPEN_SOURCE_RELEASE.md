@@ -54,7 +54,9 @@ The cleanup passed a Node 24 Docker build with `npm ci`, typecheck, lint,
 The optional Python suite passed all 19 tests. `npm audit` reported zero
 vulnerabilities and Gitleaks found no secrets in the source export. These are
 point-in-time results, not a guarantee about future dependencies or commits.
-GitHub Actions has been configured but has not yet run on GitHub.
+GitHub Actions runs these JavaScript checks on pushes and pull requests.
+See the repository's Actions tab for the latest hosted result. Shared-runner
+frontend tests use bounded concurrency and explicit async timeouts.
 
 The owner selected MIT and authorized a new public repository under
 `UC-Motorsport`. The initial public commit uses the cleaned export and has no
