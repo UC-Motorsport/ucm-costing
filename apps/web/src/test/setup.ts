@@ -6,7 +6,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, vi } from "vitest"
 import { server } from "@/test/server"
 import { setViewport } from "@/test/viewport"
 
-// Lazy-loaded screens and mocked network responses may take longer on CI.
+// Allow lazy-loaded screens and mocked network responses to settle.
 // Keep assertions condition-based instead of adding fixed sleeps or retries.
 configure({ asyncUtilTimeout: 5_000 })
 

@@ -2,8 +2,7 @@
 
 Create a cloud environment for this repository. Give the
 GitHub connection access to the repository, then prepare and verify the
-environment before publishing it. GitHub Actions secrets do not automatically
-configure Codex Cloud. This project needs no external API keys for development.
+environment before publishing it. This project needs no external API keys for development.
 
 ## Installation
 

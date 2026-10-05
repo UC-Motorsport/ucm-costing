@@ -13,8 +13,8 @@ The project uses the MIT license; workspace package metadata identifies it as
 Do not publish reference documents, marks or Docker images containing them
 without the applicable permission.
 
-Maintainers should enable private vulnerability reporting and require CI and
-review for changes to the default branch. Check collaborator permissions and
+Maintainers should enable private vulnerability reporting and review changes
+to the default branch. Check collaborator permissions and
 publication settings separately from source files.
 
 ## Build a source candidate
@@ -54,9 +54,7 @@ The cleanup passed a Node 24 Docker build with `npm ci`, typecheck, lint,
 The optional Python suite passed all 19 tests. `npm audit` reported zero
 vulnerabilities and Gitleaks found no secrets in the source export. These are
 point-in-time results, not a guarantee about future dependencies or commits.
-GitHub Actions runs these JavaScript checks on pushes and pull requests.
-See the repository's Actions tab for the latest hosted result. Shared-runner
-frontend tests use bounded concurrency and explicit async timeouts.
+Run checks locally as described in `CONTRIBUTING.md`.
 
 The owner selected MIT and authorized a new public repository under
 `UC-Motorsport`. The initial public commit uses the cleaned export and has no
